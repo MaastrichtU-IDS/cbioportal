@@ -1,0 +1,93 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: cbioportal
+  template: cbioportal
+message: |-
+  The following components have been scheduled for creation in your project: cbioDB, mongoDB, cbioportal-session-service andcbioportal-container.
+  Go to project overview -> once the creation of all the components are finished, use the following links -
+  To access cbioportal: ${CLUSTER_NAME}:8081
+metadata:
+  annotations:
+    description: Deploys cbioportal cluster
+      For more information regarding the usage of this setup (including information of different variables), see - https://github.com/MaastrichtU-IDS/cbioportal
+
+      WARNING- This deployment setup is still in the experimental stage.
+    iconClass: icon-hadoop
+    openshift.io/display-name: cbioportal
+    openshift.io/documentation-url: https://github.com/MaastrichtU-IDS/cbioportal
+    openshift.io/support-url: https://github.com/MaastrichtU-IDS/cbioportal
+    openshift.io/long-description: The cBio Cancer Genomics Portal is an open-source resource for interactive exploration of multidimensional cancer genomics data sets.
+    openshift.io/provider-display-name: CBIO
+    tags: cbioportal
+    template.openshift.io/bindable: "false"
+  name: cbioportal
+
+objects:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: cbioportal database
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${CLUSTER_NAME}-cbioportal-database
+  spec:
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: ${CLUSTER_NAME}-cbioportal-database
+      spec:
+        containers:
+          - name: cbioportal-database
+            add: 
+            image: umids/cbioportal:latest
+            imagePullPolicy: Always
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 300m
+                memory: 512Mi
+            env:
+              - name: MYSQL_DATABASE
+                value: ${MYSQL_DATABASE}
+              - name: MYSQL_PASSWORD
+                value: ${MYSQL_PASSWORD}
+              - name: MYSQL_ROOT_PASSWORD
+                value: ${MYSQL_ROOT_PASSWORD}
+              - name: MYSQL_USER
+                value: ${MYSQL_USER}
+            ports:
+              - containerPort: 3306
+
+parameters:
+- description: Unique identifier for your cluster. Recommended value - your username
+  displayName: Cluster Name
+  name: CLUSTER_NAME
+  required: true
+
+- description: password for the MySQL root user
+  displayName: MySQL root password
+  name: MYSQL_ROOT_PASSWORD
+  required: true
+  value: password
+
+- description: MySQL database name
+  displayName: MySQL database name
+  name: MYSQL_DATABASE
+  required: true
+  value: cbioportal
+
+- description: MySQL user password
+  displayName: MySQL password
+  name: MYSQL_PASSWORD
+  required: true
+  value: password
+
+- description: The MySQL username
+  displayName: MySQL username
+  name: MYSQL_USER
+  required: true
+  value: cbio
